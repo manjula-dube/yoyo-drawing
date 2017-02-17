@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Drawing Board</title>
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <link href="/static/css/literallycanvas.css" rel="stylesheet">
+      <!-- dependency: React.js -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-with-addons.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-dom.js"></script>
+
+  <script type="text/javascript" src="static/js/literallycanvas.min.js"></script>
+  </head>
+  <body>
+    <h2 style="text-align:center">Drawing Board</h2>
+    <form id="submit-drawing">
+      <input type="text" name="username">
+      <input type="submit">
+    </form>
+     <div class="my-drawing"></div>
+
+    <!-- kick it off -->
+    <script>
+        LC.init(
+            document.getElementsByClassName('my-drawing')[0],
+            {imageURLPrefix: '/static/img'}
+        );
+    </script>
+
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="https://apps-static.flock.co/js-sdk/0.1.0/flock.js"></script>
+
+    <script type="text/javascript">
+      function getParameterByName(name, url) {
+          if (!url) {
+            url = window.location.href;
+          }
+          name = name.replace(/[\[\]]/g, "\\$&");
+          var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+              results = regex.exec(url);
+          if (!results) return null;
+          if (!results[2]) return '';
+          return decodeURIComponent(results[2].replace(/\+/g, " "));
+      }
+
+      const serialize = function(obj) {
+        var str = [];
+        for(var p in obj)
+          if (obj.hasOwnProperty(p)) {
+            str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+          }
+        return str.join("&");
+      }
+
+      let drawingForm = $('#submit-drawing')
+
+      drawingForm.on('submit', (evt) => {
+        evt.preventDefault()
+        const username = drawingForm.serialize().split("=")[1]
+
+        console.log('FULL STRING', document.location.href)
+
+        const flockEventToken = getParameterByName('flockEventToken', document.location.href)
+        const eventParam = getParameterByName('flockEvent', document.location.href)
+        const flockClaimToken = getParameterByName('flockClaimToken', document.location.href)
+        const eventObj = JSON.parse(eventParam)
+        eventObj.text = username
+        eventObj.token = flockEventToken
+
+        let serializedData = serialize(eventObj)
+
+        // console.log('SERIALIZED DATA', serializedData)
+        
+        $.ajax({
+          type: "POST",
+          url: '/create',
+          data: serializedData,
+          success: () => flock.close()
+        });
+
+      })
+
+    </script>
+  </body>
+</html>
